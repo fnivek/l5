@@ -1,0 +1,43 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  godot-start:
+    desc: "Open an instance of Godot and load this project."
+    cmds:
+      - bash -c 'godot -e ./ > /dev/null 2>&1 & disown'
+
+  update-flake-inputs:
+    desc: "Updates all flake inputs."
+    cmds:
+      - nix flake update
+
+  super-lint:
+    desc: Run GitHub super linter.
+    cmds:
+      - >-
+        sudo docker run
+        -e LOG_LEVEL=INFO
+        -e RUN_LOCAL=true
+        -e DEFAULT_BRANCH=main
+        -v $(pwd):/tmp/lint
+        --rm
+        ghcr.io/super-linter/super-linter:latest
+
+  super-format:
+    desc: Run GitHub super linter with all fix enabled.
+    cmds:
+      - >-
+        sudo docker run
+        -e LOG_LEVEL=INFO
+        -e RUN_LOCAL=true
+        -e DEFAULT_BRANCH=main
+        -e FIX_YAML_PRETTIER=true
+        -e FIX_MARKDOWN=true
+        -e FIX_MARKDOWN_PRETTIER=true
+        -e FIX_BIOME_FORMAT=true
+        -e FIX_CLANG_FORMAT=true
+        -v $(pwd):/tmp/lint
+        --rm
+        ghcr.io/super-linter/super-linter:latest
