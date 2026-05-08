@@ -40,6 +40,35 @@
       # Development environments output by this flake
       devShells = forEachSupportedSystem (
         { pkgs-flake, pkgs-nix }:
+        let
+          py = pkgs-nix.python3;
+          pyEnv = py.withPackages (
+            ps: with ps; [
+              pytest
+              pytest-cov
+              pytest-mock
+
+              black
+              flake8
+              pylint
+              pycodestyle
+              ruff
+              pyflakes
+              yapf
+              autopep8
+              mccabe
+
+              python-lsp-server
+
+              sphinx
+              sphinx-autodoc-typehints
+              sphinx-rtd-theme
+
+              click
+              requests
+            ]
+          );
+        in
         {
           # Run `nix develop` to activate this environment or `direnv allow` if you have direnv installed
           default = pkgs-flake.mkShell {
@@ -83,6 +112,11 @@
 
               # CMake
               cmake
+
+              # Python
+              py
+              pyEnv
+              poetry
             ];
 
             # Set any environment variables for your development environment
