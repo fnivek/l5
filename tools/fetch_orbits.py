@@ -130,7 +130,7 @@ def row_from_sbdb(t: dict) -> dict:
         "om_deg": t.get("om", ""),
         "w_deg": t.get("w", ""),
         "ma_deg": t.get("ma", ""),
-        "period_yr": t.get("per", ""),
+        "period_yr": round(float(t["per"]) / 365.25, 6) if t.get("per") else "",
     }
 
 
