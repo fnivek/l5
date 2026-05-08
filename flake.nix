@@ -66,6 +66,9 @@
 
               click
               requests
+              numpy
+              matplotlib
+              pyqt5
             ]
           );
         in
@@ -124,6 +127,7 @@
 
             # Add any shell logic you want executed when the environment is activated
             shellHook = ''
+              export QT_PLUGIN_PATH="${pkgs-flake.qt5.qtbase}/${pkgs-flake.qt5.qtbase.qtPluginPrefix}"
               printf "L4 *** J *** L5\n"
             '';
           };
