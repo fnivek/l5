@@ -39,3 +39,27 @@ The project configures Helix to use the Godot LSP over a local socket. The Godot
 - `art/` holds sprites/assets; `build/` is gitignored (export output only).
 - The main scene is set by UID in `project.godot`; find it via the Godot editor's filesystem dock.
 - `ToggleDebug` is a defined input action (F11 by default) available in all scripts.
+
+## Game Design Context
+
+L5 is a hard sci-fi 2D factory/logistics game set in Jupiter's L5 Trojan asteroid swarm. Core reference: Satisfactory's logistics loop, but in space with real orbital mechanics. Key design constraints to keep in mind:
+
+**World**
+- Persistent MMORPG-style shared world; asteroid orbits match real ephemeris data (set N years in the future) and evolve in real time at game time scale (~10x compression)
+- Asteroids average ~10 light-seconds apart; light-speed delay is a soft distance limiter
+- Full asteroid map is known at game start; composition must be scanned within range
+- No enemies — conflict is economic (land rights, patents, market prices)
+
+**Progression arc**: personal ship → factory bay → permanent space station → asteroid claims → mining drones → space tug logistics network
+
+**Asteroid types** (based on real Jupiter Trojan spectra): D-type (carbon/organics/volatiles, dominant), C-type (carbonaceous, possible water ice), P-type (silicate/metal mix). Volatiles require special extraction equipment.
+
+**Logistics**: Space tugs replace conveyors. Propulsion tiers: solar sail → ion drive → cold gas → chemical → nuclear fission. Each trades speed vs. fuel vs. cargo capacity.
+
+**Tech tree**: Patent purchases with credits (no component gating). Some recipes additionally unlock after producing a threshold quantity of a material.
+
+**Economy**: Sell processed goods to Ganymede (primary sink) or to other players. Land rights purchased with credits.
+
+**Death**: Ship destruction → respawn at last-used factory station as a backup intelligence upload.
+
+**Factory stations**: 2D with multiple vertical floors; auto-layout tools available from the start; all merger/splitter tools unlocked immediately (logistics complexity lives in orbital mechanics, not tool gating).
