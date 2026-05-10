@@ -75,7 +75,6 @@
               gh
 
               # Language servers.
-              helix
               nixfmt-rfc-style
               nil
               nixd
@@ -95,16 +94,6 @@
               # environment control
               direnv
               nix-direnv
-
-              # GoDot
-              pkgs.godot
-              gdtoolkit_4
-
-              # Graphics
-              pixelorama
-
-              # Audio
-              audacity
 
               # CMake
               cmake
