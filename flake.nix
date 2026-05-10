@@ -4,8 +4,6 @@
   inputs = {
     # Unstable packages from nixpkgs.
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    # Stable Nixpkgs from flake hub.
-    flakehub.url = "https://flakehub.com/f/NixOS/nixpkgs/*";
   };
 
   outputs =
@@ -21,15 +19,10 @@
       # Helper for providing system-specific attributes
       forEachSupportedSystem =
         f:
-        inputs.flakehub.lib.genAttrs supportedSystems (
+        inputs.nixpkgs.lib.genAttrs supportedSystems (
           system:
           f {
-            # Provides a system-specific, configured Nixpkgs
-            pkgs-flake = import inputs.flakehub {
-              inherit system;
-              config.allowUnfree = true;
-            };
-            pkgs-nix = import inputs.nixpkgs {
+            pkgs = import inputs.nixpkgs {
               inherit system;
               config.allowUnfree = true;
             };
@@ -39,9 +32,9 @@
     {
       # Development environments output by this flake
       devShells = forEachSupportedSystem (
-        { pkgs-flake, pkgs-nix }:
+        { pkgs }:
         let
-          py = pkgs-nix.python3;
+          py = pkgs.python3;
           pyEnv = py.withPackages (
             ps: with ps; [
               pytest
@@ -74,9 +67,9 @@
         in
         {
           # Run `nix develop` to activate this environment or `direnv allow` if you have direnv installed
-          default = pkgs-flake.mkShell {
+          default = pkgs.mkShell {
             # The Nix packages provided in the environment
-            packages = with pkgs-flake; [
+            packages = with pkgs; [
               # Version control
               git
               gh
@@ -104,7 +97,7 @@
               nix-direnv
 
               # GoDot
-              pkgs-nix.godot
+              pkgs.godot
               gdtoolkit_4
 
               # Graphics
@@ -127,7 +120,7 @@
 
             # Add any shell logic you want executed when the environment is activated
             shellHook = ''
-              export QT_PLUGIN_PATH="${pkgs-flake.qt5.qtbase}/${pkgs-flake.qt5.qtbase.qtPluginPrefix}"
+              export QT_PLUGIN_PATH="${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
               printf "L4 *** J *** L5\n"
             '';
           };
