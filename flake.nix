@@ -16,7 +16,6 @@
         "aarch64-darwin" # 64-bit ARM macOS
       ];
 
-      # Helper for providing system-specific attributes
       forEachSupportedSystem =
         f:
         inputs.nixpkgs.lib.genAttrs supportedSystems (
@@ -28,8 +27,33 @@
             };
           }
         );
+
+      # Returns per-system packages. Adding a package here automatically
+      # makes its nativeBuildInputs available in the devShell.
+      mkRepoPkgs =
+        pkgs:
+        let
+          mkCmake =
+            name: src:
+            pkgs.stdenv.mkDerivation {
+              pname = name;
+              version = "0.1.0";
+              src = src;
+              nativeBuildInputs = with pkgs; [
+                cmake
+                ninja
+              ];
+              cmakeFlags = [ "-GNinja" ];
+            };
+        in
+        {
+          behavior_trees = mkCmake "behavior_trees" ./libs/behavior_trees;
+          l5 = mkCmake "l5" ./.;
+        };
     in
     {
+      packages = forEachSupportedSystem ({ pkgs }: mkRepoPkgs pkgs);
+
       # Development environments output by this flake
       devShells = forEachSupportedSystem (
         { pkgs }:
@@ -64,51 +88,55 @@
               pyqt5
             ]
           );
+
+          # Collect build deps from every repo package so the devShell
+          # always has whatever is needed to build them locally.
+          repoPkgsList = builtins.attrValues (mkRepoPkgs pkgs);
+          repoNativeBuildInputs = builtins.concatMap (p: p.nativeBuildInputs or [ ]) repoPkgsList;
+          repoBuildInputs = builtins.concatMap (p: p.buildInputs or [ ]) repoPkgsList;
         in
         {
           # Run `nix develop` to activate this environment or `direnv allow` if you have direnv installed
           default = pkgs.mkShell {
-            # The Nix packages provided in the environment
-            packages = with pkgs; [
-              # Version control
-              git
-              gh
+            packages =
+              with pkgs;
+              [
+                # Version control
+                git
+                gh
 
-              # Language servers.
-              nixfmt-rfc-style
-              nil
-              nixd
-              vscode-langservers-extracted
-              yaml-language-server
-              # Ansible is broken see https://github.com/ansible/vscode-ansible/issues/1144
-              # ansible-language-server
-              taplo
-              bash-language-server
-              clang
-              clang-tools
-              cmake-language-server
+                # Language servers
+                nixfmt
+                nil
+                nixd
+                vscode-langservers-extracted
+                yaml-language-server
+                taplo
+                bash-language-server
+                clang
+                clang-tools
+                cmake-language-server
 
-              # Go task
-              go-task
+                # Go task
+                go-task
 
-              # environment control
-              direnv
-              nix-direnv
+                # environment control
+                direnv
+                nix-direnv
 
-              # CMake
-              cmake
+                # Python
+                py
+                pyEnv
+                poetry
+              ]
+              ++ repoNativeBuildInputs;
 
-              # Python
-              py
-              pyEnv
-              poetry
-            ];
+            buildInputs = repoBuildInputs;
 
-            # Set any environment variables for your development environment
             env = { };
 
-            # Add any shell logic you want executed when the environment is activated
             shellHook = ''
+              # This Allows qt to work, we are using qt in the tools/plot_orbits.py in matplotlib.
               export QT_PLUGIN_PATH="${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
               printf "L4 *** J *** L5\n"
             '';
