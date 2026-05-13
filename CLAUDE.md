@@ -6,9 +6,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 L5 is a Godot 4.6 game (working title "L5") targeting Linux, Windows, and Web. The dev environment is managed via Nix flakes — enter it with `nix develop` or `direnv allow`.
 
+## Dependency Management
+
+Never install programs locally. All dependencies go in `flake.nix`:
+
+- **Build dependency** (needed to compile a package): add to that package's `nativeBuildInputs` or `buildInputs` in `mkRepoPkgs`.
+- **Dev-only dependency** (tools, linters, formatters, LSPs): add to the `default` devShell `packages` list.
+
+If the devShell grows too large it may be split into focused shells (e.g. formatter, linter), but for now there is one global `default`.
+
 ## Common Commands
 
-All task runner commands use [go-task](https://taskfile.dev):
+All task runner commands use [go-task](https://taskfile.dev). When editing `Taskfile.yml` or any included Taskfile, follow the [style guide](https://taskfile.dev/docs/styleguide) and [usage guide](https://taskfile.dev/docs/guide).
+
+Tasks must run inside the Nix dev shell. Either enter it first with `nix develop`, or prefix any task with `nix develop --command`:
+
+```sh
+nix develop --command task ci   # Run the full CI suite locally
+```
 
 ```sh
 task godot-start      # Open Godot editor with this project
