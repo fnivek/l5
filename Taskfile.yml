@@ -2,7 +2,133 @@
 
 version: "3"
 
+# ---------------------------------------------------------------------------
+# Global task vars.
+# ---------------------------------------------------------------------------
+vars:
+  PACKAGES:
+    - l5
+    - behavior_trees
+
 tasks:
+  # ---------------------------------------------------------------------------
+  # Helpers
+  # ---------------------------------------------------------------------------
+  default:
+    desc: "List all tasks."
+    cmds:
+      - task --list
+
+  # ---------------------------------------------------------------------------
+  # Build
+  # ---------------------------------------------------------------------------
+
+  build-native-release:
+    desc: "Configure and build all release C++ targets natively with CMake + Ninja."
+    env:
+      BUILD_TYPE: Release
+      BUILD_DIR: build/release
+    cmds:
+      - bash tasks/build-native.sh
+
+  build-native-debug:
+    desc: "Configure and build all debug C++ targets natively with CMake + Ninja."
+    env:
+      BUILD_TYPE: Debug
+      BUILD_DIR: build/debug
+    aliases:
+      - build
+    cmds:
+      - bash tasks/build-native.sh
+
+  build-nix:
+    desc: "Build all Nix flake packages."
+    cmds:
+      - for: { var: PACKAGES }
+        task: build-nix-{{.ITEM}}
+
+  build-nix-*:
+    desc: "Build a single Nix flake package"
+    vars:
+      PACKAGE: "{{index .MATCH 0}}"
+    cmds:
+      - nix build --out-link build/nix/{{.PACKAGE}} .#{{.PACKAGE}}
+
+  # ---------------------------------------------------------------------------
+  # Test
+  # ---------------------------------------------------------------------------
+
+  test-cpp:
+    desc: "[STUB] Run C++ unit tests via CTest. Requires CTest targets in CMakeLists."
+    cmds:
+      - echo "[STUB] test-cpp -- add enable_testing()/add_test() to CMakeLists, then replace with ctest --test-dir build/native --output-on-failure"
+
+  test-python:
+    desc: "Run Python tests with pytest."
+    cmds:
+      # Exit 5 means "no tests collected" which is fine until tests are written.
+      - bash -c 'pytest tools/ || [ $? -eq 5 ]'
+
+  # ---------------------------------------------------------------------------
+  # Lint
+  # ---------------------------------------------------------------------------
+
+  lint-cpp:
+    desc: "[STUB] Run clang-tidy on C++ sources. Requires a .clang-tidy config."
+    cmds:
+      - echo "[STUB] lint-cpp -- create a .clang-tidy config, then replace with run-clang-tidy -p build/native"
+
+  lint-python:
+    desc: "Lint Python sources with ruff."
+    cmds:
+      - ruff check tools/
+
+  lint-nix:
+    desc: "Check Nix files are formatted with nixfmt."
+    cmds:
+      - nixfmt --check flake.nix
+
+  # ---------------------------------------------------------------------------
+  # Format
+  # ---------------------------------------------------------------------------
+
+  format-check-cpp:
+    desc: "[STUB] Check C++ formatting with clang-format. Requires a .clang-format config."
+    cmds:
+      - echo "[STUB] format-check-cpp -- create a .clang-format config, then replace with clang-format --dry-run --Werror on all sources"
+
+  format-check-python:
+    desc: "Check Python formatting with black."
+    cmds:
+      - black --check tools/
+
+  format-python:
+    desc: "Check Python formatting with black."
+    cmds:
+      - black tools/
+
+  # ---------------------------------------------------------------------------
+  # CI meta-task (runs everything — useful locally)
+  # ---------------------------------------------------------------------------
+
+  ci:
+    desc: "Run the full CI suite locally (build, test, lint, format checks)."
+    deps:
+      - build-nix
+      - build-native-release
+      - build-native-debug
+      - test-cpp
+      - test-python
+      - lint-cpp
+      - lint-python
+      - lint-nix
+      - format-check-cpp
+      - format-check-python
+
+  # ---------------------------------------------------------------------------
+  # Dev tooling
+  # ---------------------------------------------------------------------------
+
   godot-start:
     desc: "Open an instance of Godot and load this project."
     cmds:
