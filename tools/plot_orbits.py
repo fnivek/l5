@@ -97,9 +97,11 @@ def load_csv(path):
                         "w": float(row["w_deg"]),
                         "ma": float(row["ma_deg"]),
                         "epoch": float(row["epoch_jd"]),
-                        "period": float(row["period_yr"])
-                        if row["period_yr"]
-                        else float(row["a_au"]) ** 1.5,
+                        "period": (
+                            float(row["period_yr"])
+                            if row["period_yr"]
+                            else float(row["a_au"]) ** 1.5
+                        ),
                     }
                 )
             except (ValueError, KeyError):

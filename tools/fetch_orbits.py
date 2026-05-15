@@ -17,7 +17,7 @@ SBDB_URL = "https://ssd-api.jpl.nasa.gov/sbdb_query.api"
 DEFAULT_EPOCH = "2000-01-01"
 
 PLANETS = [
-    ("Sun",     "10",  "@0"),
+    ("Sun", "10", "@0"),
     ("Mercury", "199", "@10"),
     ("Venus", "299", "@10"),
     ("Earth", "399", "@10"),
@@ -80,8 +80,10 @@ def horizons_elements(body_id: str, center: str, epoch: str) -> dict:
     soe = text.index("$$SOE")
     eoe = text.index("$$EOE")
     pre_lines = text[:soe].rstrip().split("\n")
-    header_line = next(l.strip() for l in reversed(pre_lines) if not l.strip().startswith("*"))
-    data_line = text[soe + 5:eoe].strip().split("\n")[0]
+    header_line = next(
+        line.strip() for line in reversed(pre_lines) if not line.strip().startswith("*")
+    )
+    data_line = text[soe + 5 : eoe].strip().split("\n")[0]
 
     headers = [h.strip() for h in header_line.split(",")]
     values = [v.strip() for v in data_line.split(",")]
