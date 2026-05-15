@@ -72,7 +72,6 @@ Notable real asteroids in the L5 swarm:
 ### Development
 ```sh
 nix develop          # enter dev shell (or: direnv allow)
-task godot-start     # open Godot editor
 ```
 
 ### Lint / Format
@@ -82,6 +81,3 @@ gdformat path/to/script.gd
 task super-lint      # full repo lint via Docker
 task super-format    # auto-fix
 ```
-
-### Export
-Project → Export in the Godot editor. Targets: Linux (`build/linux/`), Windows (`build/windows/`), Web (`build/web/`).

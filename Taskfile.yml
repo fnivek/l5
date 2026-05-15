@@ -129,11 +129,6 @@ tasks:
   # Dev tooling
   # ---------------------------------------------------------------------------
 
-  godot-start:
-    desc: "Open an instance of Godot and load this project."
-    cmds:
-      - bash -c 'godot -e ./ > /dev/null 2>&1 & disown'
-
   update-flake-inputs:
     desc: "Updates all flake inputs."
     cmds:
