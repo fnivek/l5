@@ -23,6 +23,11 @@ tasks:
   # Build
   # ---------------------------------------------------------------------------
 
+  clean:
+    desc: Delete all build artifacts.
+    cmds:
+      - rm -rf build/*
+
   build-native-release:
     desc: "Configure and build all release C++ targets natively with CMake + Ninja."
     env:
