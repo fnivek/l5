@@ -1,0 +1,28 @@
+# Runs on every push and pull request.
+# Each step calls a Taskfile task via `nix develop --command` so the full Nix
+# dev shell (tools, build deps) is available. The same tasks work locally with
+# just `task <name>` from inside the dev shell.
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install Nix with flakes enabled.
+      - uses: DeterminateSystems/nix-installer-action@v14
+
+      # Cache the Nix store keyed on flake.lock so rebuilds are fast.
+      # Uses GitHub's built-in cache — no external accounts or tokens needed.
+      - uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: ${{ runner.os }}-nix-${{ hashFiles('flake.lock') }}
+          restore-prefixes-first-match: ${{ runner.os }}-nix-
+          gc-max-store-size: 10000000000
+
+      - name: CI
+        run: nix develop --command task ci
