@@ -91,7 +91,7 @@ tasks:
   lint-nix:
     desc: "Check Nix files are formatted with nixfmt."
     cmds:
-      - nixfmt --check flake.nix
+      - nixfmt --check flake.nix $(find nix -name "*.nix")
 
   # ---------------------------------------------------------------------------
   # Format
