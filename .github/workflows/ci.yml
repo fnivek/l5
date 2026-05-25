@@ -24,5 +24,17 @@ jobs:
           restore-prefixes-first-match: ${{ runner.os }}-nix-
           gc-max-store-size: 10000000000
 
+      # Cache the Emscripten system-library cache so libc, libc++, etc. are not
+      # recompiled on every push.  Emscripten (via Nix) writes compiled system
+      # libraries to /tmp/<store-hash>-emscripten-<version>_cache/; that path
+      # is stable for a given flake.lock because the store hash is content-
+      # addressed.  Keying on flake.lock means the cache is automatically
+      # invalidated whenever the emscripten version changes.
+      - name: Cache Emscripten sysroot libraries
+        uses: actions/cache@v4
+        with:
+          path: /tmp/*-emscripten-*_cache
+          key: ${{ runner.os }}-emscripten-${{ hashFiles('flake.lock') }}
+
       - name: CI
         run: nix develop --command task ci
