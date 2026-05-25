@@ -1,6 +1,5 @@
 {
   description = "Flake to build everything in the monorepo.";
-
   inputs = {
     # Unstable packages from nixpkgs.
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";

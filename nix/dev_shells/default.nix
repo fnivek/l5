@@ -68,6 +68,10 @@
           py
           pyEnv
           poetry
+
+          # Build tools
+          cmake
+          emscripten
         ];
 
         shellHook = ''

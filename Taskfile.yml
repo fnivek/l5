@@ -28,40 +28,47 @@ tasks:
     cmds:
       - rm -rf build/*
 
-  build-native-release:
-    desc: "Configure and build all release C++ targets natively with CMake + Ninja."
+  build-release:
+    desc: "Configure and build release Web (WASM) targets with Emscripten + CMake + Ninja."
     env:
       BUILD_TYPE: Release
       BUILD_DIR: build/release
+    aliases:
+      - release
     cmds:
-      - bash tasks/build-native.sh
+      - bash tasks/build-web.sh
 
-  build-native-debug:
-    desc: "Configure and build all debug C++ targets natively with CMake + Ninja."
+  build-debug:
+    desc: "Configure and build debug Web (WASM) targets with Emscripten + CMake + Ninja."
     env:
       BUILD_TYPE: Debug
       BUILD_DIR: build/debug
     aliases:
       - build
     cmds:
-      - bash tasks/build-native.sh
+      - bash tasks/build-web.sh
 
-  build-nix:
-    desc: "Build all Nix flake packages."
+  serve-web-release:
+    desc: "Serve the release web build at http://localhost:8000."
     cmds:
-      - for: { var: PACKAGES }
-        task: build-nix-{{.ITEM}}
+      - python -m http.server --directory build/release/apps/l5
 
-  build-nix-*:
-    desc: "Build a single Nix flake package"
-    vars:
-      PACKAGE: "{{index .MATCH 0}}"
+  serve-web-debug:
+    desc: "Serve the debug web build at http://localhost:8000."
+    aliases:
+      - serve-web
     cmds:
-      - nix build --out-link build/nix/{{.PACKAGE}} .#{{.PACKAGE}}
+      - python -m http.server --directory build/debug/apps/l5
 
   # ---------------------------------------------------------------------------
   # Test
   # ---------------------------------------------------------------------------
+
+  test:
+    desc: Run all unit tests.
+    deps:
+      - test-cpp
+      - test-python
 
   test-cpp:
     desc: "[STUB] Run C++ unit tests via CTest. Requires CTest targets in CMakeLists."
@@ -78,6 +85,13 @@ tasks:
   # Lint
   # ---------------------------------------------------------------------------
 
+  lint:
+    desc: Run all linters.
+    deps:
+      - lint-cpp
+      - lint-python
+      - lint-nix
+
   lint-cpp:
     desc: "[STUB] Run clang-tidy on C++ sources. Requires a .clang-tidy config."
     cmds:
@@ -89,13 +103,20 @@ tasks:
       - ruff check tools/
 
   lint-nix:
-    desc: "Check Nix files are formatted with nixfmt."
+    desc: "[STUB] Lint nix files."
     cmds:
-      - nixfmt --check flake.nix $(find nix -name "*.nix")
+      - echo "[STUB] Lint nix files."
 
   # ---------------------------------------------------------------------------
   # Format
   # ---------------------------------------------------------------------------
+
+  format-check:
+    desc: "Run all format checks."
+    deps:
+      - format-check-cpp
+      - format-check-python
+      - format-check-nix
 
   format-check-cpp:
     desc: "[STUB] Check C++ formatting with clang-format. Requires a .clang-format config."
@@ -105,30 +126,47 @@ tasks:
   format-check-python:
     desc: "Check Python formatting with black."
     cmds:
-      - black --check tools/
+      - black --check ./
+
+  format-check-nix:
+    desc: "Check Nix files are formatted with nixfmt."
+    cmds:
+      - nixfmt --check flake.nix $(find nix -name "*.nix")
+
+  format:
+    desc: "Run all formatters."
+    deps:
+      - format-cpp
+      - format-python
+      - format-nix
+
+  format-cpp:
+    desc: "[STUB] Fromat CPP files."
+    cmds:
+      - echo "[STUB] Fromat CPP files."
 
   format-python:
-    desc: "Check Python formatting with black."
+    desc: "Format Python files with black."
     cmds:
-      - black tools/
+      - black ./
+
+  format-nix:
+    desc: "Check Nix files are formatted with nixfmt."
+    cmds:
+      - nixfmt flake.nix $(find nix -name "*.nix")
 
   # ---------------------------------------------------------------------------
-  # CI meta-task (runs everything — useful locally)
+  # CI meta-task (runs everything)
   # ---------------------------------------------------------------------------
 
   ci:
-    desc: "Run the full CI suite locally (build, test, lint, format checks)."
+    desc: "Run the full CI suite (build, test, lint, format checks)."
     deps:
-      - build-nix
-      - build-native-release
-      - build-native-debug
-      - test-cpp
-      - test-python
-      - lint-cpp
-      - lint-python
-      - lint-nix
-      - format-check-cpp
-      - format-check-python
+      - build-release
+      - build-debug
+      - test
+      - lint
+      - format-check
 
   # ---------------------------------------------------------------------------
   # Dev tooling
