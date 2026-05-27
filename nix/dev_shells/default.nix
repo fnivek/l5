@@ -72,6 +72,9 @@
           # Build tools
           cmake
           emscripten
+
+          # Native Linux build (SDL1; used by the linux target and clangd LSP)
+          SDL
         ];
 
         shellHook = ''
