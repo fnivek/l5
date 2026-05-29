@@ -9,10 +9,10 @@ add_executable(l5 src/main.cpp)
 target_link_libraries(l5 PRIVATE behavior_trees)
 
 if(EMSCRIPTEN)
-  # SDL1 via Emscripten's system port. Must be on both compile and link so the
+  # SDL3 via Emscripten's system port. Must be on both compile and link so the
   # port's include paths are injected at compile time.
-  target_compile_options(l5 PRIVATE -sUSE_SDL=1)
-  target_link_options(l5 PRIVATE -sUSE_SDL=1)
+  target_compile_options(l5 PRIVATE -sUSE_SDL=3)
+  target_link_options(l5 PRIVATE -sUSE_SDL=3)
 
   set_target_properties(l5 PROPERTIES OUTPUT_NAME "index" SUFFIX ".html")
   install(FILES
@@ -21,10 +21,9 @@ if(EMSCRIPTEN)
       ${CMAKE_CURRENT_BINARY_DIR}/index.wasm
       DESTINATION share/l5)
 else()
-  # Native Linux build — SDL1 (via sdl12-compat in the Nix dev shell).
-  find_package(SDL REQUIRED)
-  target_include_directories(l5 PRIVATE ${SDL_INCLUDE_DIR})
-  target_link_libraries(l5 PRIVATE ${SDL_LIBRARY})
+  # Native Linux build — SDL3.
+  find_package(SDL3 REQUIRED CONFIG)
+  target_link_libraries(l5 PRIVATE SDL3::SDL3)
 
   # Bake the compiler's implicit system includes into compile_commands.json so
   # clangd can find standard headers (stdio.h, libstdc++, glibc, …) without

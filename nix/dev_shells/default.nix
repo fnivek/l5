@@ -73,8 +73,8 @@
           cmake
           emscripten
 
-          # Native Linux build (SDL1; used by the linux target and clangd LSP)
-          SDL
+          # Native Linux build (SDL3; used by the linux target and clangd LSP)
+          sdl3
         ];
 
         shellHook = ''
