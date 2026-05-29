@@ -1,60 +1,95 @@
-// Copyright 2011 The Emscripten Authors.  All rights reserved.
-// Emscripten is available under two separate licenses, the MIT license and the
-// University of Illinois/NCSA Open Source License.  Both these licenses can be
-// found in the LICENSE file.
-
-#include <SDL/SDL.h>
-#include <chrono>
-#include <stdio.h>
-#include <thread>
-
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 #ifdef __EMSCRIPTEN__
-#include <emscripten.h>
+#include <emscripten/emscripten.h>
 #endif
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 
-using namespace std::chrono_literals;
+int *gFrameBuffer;
+SDL_Window *gSDLWindow;
+SDL_Renderer *gSDLRenderer;
+SDL_Texture *gSDLTexture;
+static int gDone;
+const int WINDOW_WIDTH = 1920 / 2;
+const int WINDOW_HEIGHT = 1080 / 2;
 
-int main(int argc, char **argv) {
-  printf("Hello, world!\n");
-
-  SDL_Init(SDL_INIT_VIDEO);
-  SDL_Surface *screen = SDL_SetVideoMode(256, 256, 32, SDL_SWSURFACE);
-
-#ifdef TEST_SDL_LOCK_OPTS
-  EM_ASM("SDL.defaults.copyOnLock = false; SDL.defaults.discardOnLock = true; "
-         "SDL.defaults.opaqueFrontBuffer = false;");
-#endif
-
-  if (SDL_MUSTLOCK(screen))
-    SDL_LockSurface(screen);
-  for (int i = 0; i < 256; i++) {
-    for (int j = 0; j < 256; j++) {
-#ifdef TEST_SDL_LOCK_OPTS
-      // Alpha behaves like in the browser, so write proper opaque pixels.
-      int alpha = 255;
-#else
-      // To emulate native behavior with blitting to screen, alpha component is
-      // ignored. Test that it is so by outputting data (and testing that it
-      // does get discarded)
-      int alpha = (i + j) % 255;
-#endif
-      *((Uint32 *)screen->pixels + i * 256 + j) =
-          SDL_MapRGBA(screen->format, i, j, 255 - i, alpha);
+bool update() {
+  SDL_Event e;
+  if (SDL_PollEvent(&e)) {
+    if (e.type == SDL_EVENT_QUIT) {
+      return false;
+    }
+    if (e.type == SDL_EVENT_KEY_UP && e.key.key == SDLK_ESCAPE) {
+      return false;
     }
   }
-  if (SDL_MUSTLOCK(screen))
-    SDL_UnlockSurface(screen);
-  SDL_Flip(screen);
 
-  printf("you should see a smoothly-colored square - no sharp lines but the "
-         "square borders!\n");
-  printf("and here is some text that should be HTML-friendly: amp: |&| "
-         "double-quote: |\"| quote: |'| less-than, greater-than, html-like "
-         "tags: |<cheez></cheez>|\nanother line.\n");
+  char *pix;
+  int pitch;
 
-  std::this_thread::sleep_for(5s);
+  SDL_LockTexture(gSDLTexture, NULL, (void **)&pix, &pitch);
+  for (int i = 0, sp = 0, dp = 0; i < WINDOW_HEIGHT;
+       i++, dp += WINDOW_WIDTH, sp += pitch)
+    memcpy(pix + sp, gFrameBuffer + dp, WINDOW_WIDTH * 4);
+
+  SDL_UnlockTexture(gSDLTexture);
+  SDL_RenderTexture(gSDLRenderer, gSDLTexture, NULL, NULL);
+  SDL_RenderPresent(gSDLRenderer);
+#ifndef __EMSCRIPTEN__
+  SDL_Delay(1); // native only; in the browser rAF handles pacing
+#endif
+  return true;
+}
+
+void render(Uint64 aTicks) {
+  for (int i = 0, c = 0; i < WINDOW_HEIGHT; i++) {
+    for (int j = 0; j < WINDOW_WIDTH; j++, c++) {
+      gFrameBuffer[c] = (int)(i * i + j * j + aTicks) | 0xff000000;
+    }
+  }
+}
+
+void loop() {
+  if (!update()) {
+    gDone = 1;
+#ifdef __EMSCRIPTEN__
+    emscripten_cancel_main_loop();
+#endif
+  } else {
+    render(SDL_GetTicks());
+  }
+}
+
+int main(int argc, char **argv) {
+  if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
+    return -1;
+  }
+
+  gFrameBuffer = new int[WINDOW_WIDTH * WINDOW_HEIGHT];
+  gSDLWindow = SDL_CreateWindow("SDL3 window", WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+  gSDLRenderer = SDL_CreateRenderer(gSDLWindow, NULL);
+  gSDLTexture = SDL_CreateTexture(gSDLRenderer, SDL_PIXELFORMAT_ABGR8888,
+                                  SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH,
+                                  WINDOW_HEIGHT);
+
+  if (!gFrameBuffer || !gSDLWindow || !gSDLRenderer || !gSDLTexture)
+    return -1;
+
+  gDone = 0;
+#ifdef __EMSCRIPTEN__
+  emscripten_set_main_loop(loop, 0, 1);
+#else
+  while (!gDone) {
+    loop();
+  }
+#endif
+
+  SDL_DestroyTexture(gSDLTexture);
+  SDL_DestroyRenderer(gSDLRenderer);
+  SDL_DestroyWindow(gSDLWindow);
   SDL_Quit();
 
   return 0;
 }
-// auto main(int argc, char *argv[]) -> int { return 0; }
