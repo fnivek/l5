@@ -12,13 +12,17 @@ if(EMSCRIPTEN)
   # SDL3 via Emscripten's system port. Must be on both compile and link so the
   # port's include paths are injected at compile time.
   target_compile_options(l5 PRIVATE -sUSE_SDL=3)
-  target_link_options(l5 PRIVATE -sUSE_SDL=3)
+  target_link_options(l5 PRIVATE
+    -sUSE_SDL=3
+    --preload-file ${CMAKE_SOURCE_DIR}/assets@assets
+  )
 
   set_target_properties(l5 PROPERTIES OUTPUT_NAME "index" SUFFIX ".html")
   install(FILES
       ${CMAKE_CURRENT_BINARY_DIR}/index.html
       ${CMAKE_CURRENT_BINARY_DIR}/index.js
       ${CMAKE_CURRENT_BINARY_DIR}/index.wasm
+      ${CMAKE_CURRENT_BINARY_DIR}/index.data
       DESTINATION share/l5)
 else()
   # Native Linux build — SDL3.

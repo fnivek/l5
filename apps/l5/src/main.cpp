@@ -1,6 +1,14 @@
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_log.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3/SDL_video.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 #endif
@@ -8,88 +16,108 @@
 #include <SDL3/SDL_main.h>
 
 int *gFrameBuffer;
-SDL_Window *gSDLWindow;
+SDL_Window *gWindow{nullptr};
+SDL_Surface *gScreenSurface{nullptr};
+SDL_Surface *gHelloWorld{nullptr};
+
 SDL_Renderer *gSDLRenderer;
 SDL_Texture *gSDLTexture;
 static int gDone;
-const int WINDOW_WIDTH = 1920 / 2;
-const int WINDOW_HEIGHT = 1080 / 2;
+constexpr int kWindowWidth{1920 / 2};
+constexpr int kWindowHeight{1080 / 2};
 
-bool update() {
-  SDL_Event e;
-  if (SDL_PollEvent(&e)) {
-    if (e.type == SDL_EVENT_QUIT) {
-      return false;
+auto init() -> bool;
+auto loadMedia() -> bool;
+auto close() -> void;
+
+auto init() -> bool {
+  bool success{true};
+  if (SDL_Init(SDL_INIT_VIDEO) == false) {
+    SDL_Log("SDL could not init. SDL error: %s\n", SDL_GetError());
+    success = false;
+  } else {
+    if (gWindow =
+            SDL_CreateWindow("Tutorial land.", kWindowWidth, kWindowHeight, 0);
+        gWindow == nullptr) {
+      success = false;
+    } else {
+      gScreenSurface = SDL_GetWindowSurface(gWindow);
     }
-    if (e.type == SDL_EVENT_KEY_UP && e.key.key == SDLK_ESCAPE) {
-      return false;
+  }
+  return success;
+}
+
+auto loadMedia() -> bool {
+  bool success{true};
+
+  std::string imagePath{"assets/hello.bmp"};
+  if (gHelloWorld = SDL_LoadBMP(imagePath.c_str()); gHelloWorld == nullptr) {
+    SDL_Log("Can't load image %s. Error: %s\n", imagePath.c_str(),
+            SDL_GetError());
+    success = false;
+  }
+  return success;
+}
+
+auto close() -> void {
+  SDL_DestroySurface(gHelloWorld);
+  gHelloWorld = nullptr;
+
+  SDL_DestroyWindow(gWindow);
+  gWindow = nullptr;
+  gScreenSurface = nullptr;
+
+  SDL_Quit();
+}
+
+bool gRunning{true};
+auto logic() -> void {
+  // Events
+  SDL_Event event;
+  SDL_zero(event);
+  while (SDL_PollEvent(&event) == true) {
+    if (event.type == SDL_EVENT_KEY_UP && event.key.key == SDLK_ESCAPE) {
+      gRunning = false;
+    } else if (event.type == SDL_EVENT_QUIT) {
+      gRunning = false;
     }
   }
 
-  char *pix;
-  int pitch;
+  // Draw
+  SDL_FillSurfaceRect(gScreenSurface, nullptr,
+                      SDL_MapSurfaceRGB(gScreenSurface, 0xFF, 0xFF, 0xFF));
+  SDL_BlitSurface(gHelloWorld, nullptr, gScreenSurface, nullptr);
+  SDL_UpdateWindowSurface(gWindow);
 
-  SDL_LockTexture(gSDLTexture, NULL, (void **)&pix, &pitch);
-  for (int i = 0, sp = 0, dp = 0; i < WINDOW_HEIGHT;
-       i++, dp += WINDOW_WIDTH, sp += pitch)
-    memcpy(pix + sp, gFrameBuffer + dp, WINDOW_WIDTH * 4);
-
-  SDL_UnlockTexture(gSDLTexture);
-  SDL_RenderTexture(gSDLRenderer, gSDLTexture, NULL, NULL);
-  SDL_RenderPresent(gSDLRenderer);
-#ifndef __EMSCRIPTEN__
-  SDL_Delay(1); // native only; in the browser rAF handles pacing
-#endif
-  return true;
-}
-
-void render(Uint64 aTicks) {
-  for (int i = 0, c = 0; i < WINDOW_HEIGHT; i++) {
-    for (int j = 0; j < WINDOW_WIDTH; j++, c++) {
-      gFrameBuffer[c] = (int)(i * i + j * j + aTicks) | 0xff000000;
-    }
-  }
-}
-
-void loop() {
-  if (!update()) {
-    gDone = 1;
 #ifdef __EMSCRIPTEN__
+  if (!gRunning)
     emscripten_cancel_main_loop();
 #endif
-  } else {
-    render(SDL_GetTicks());
-  }
 }
 
-int main(int argc, char **argv) {
-  if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
-    return -1;
-  }
+auto main(int argc, char *args[]) -> int {
+  int exitCode{0};
 
-  gFrameBuffer = new int[WINDOW_WIDTH * WINDOW_HEIGHT];
-  gSDLWindow = SDL_CreateWindow("SDL3 window", WINDOW_WIDTH, WINDOW_HEIGHT, 0);
-  gSDLRenderer = SDL_CreateRenderer(gSDLWindow, NULL);
-  gSDLTexture = SDL_CreateTexture(gSDLRenderer, SDL_PIXELFORMAT_ABGR8888,
-                                  SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH,
-                                  WINDOW_HEIGHT);
+  if (init() == false) {
+    SDL_Log("Failed to init\n");
+    exitCode = 1;
+  } else {
+    if (loadMedia() == false) {
+      SDL_Log("Failed to load media\n");
+      exitCode = 2;
+    } else {
 
-  if (!gFrameBuffer || !gSDLWindow || !gSDLRenderer || !gSDLTexture)
-    return -1;
-
-  gDone = 0;
 #ifdef __EMSCRIPTEN__
-  emscripten_set_main_loop(loop, 0, 1);
+      emscripten_set_main_loop(logic, 0, 1);
 #else
-  while (!gDone) {
-    loop();
-  }
+      while (gRunning) {
+        logic();
+        SDL_Delay(1); // native only; in the browser rAF handles pacing
+      }
 #endif
-
-  SDL_DestroyTexture(gSDLTexture);
-  SDL_DestroyRenderer(gSDLRenderer);
-  SDL_DestroyWindow(gSDLWindow);
-  SDL_Quit();
-
-  return 0;
+      bool quit = false;
+    }
+    close();
+  }
+  return exitCode;
 }
