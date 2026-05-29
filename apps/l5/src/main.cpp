@@ -1,7 +1,12 @@
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
+#include <SDL3/SDL_keyboard.h>
+#include <SDL3/SDL_keycode.h>
 #include <SDL3/SDL_log.h>
+#include <SDL3/SDL_oldnames.h>
+#include <SDL3/SDL_rect.h>
+#include <SDL3/SDL_scancode.h>
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_video.h>
@@ -19,12 +24,12 @@ int *gFrameBuffer;
 SDL_Window *gWindow{nullptr};
 SDL_Surface *gScreenSurface{nullptr};
 SDL_Surface *gHelloWorld{nullptr};
+SDL_Surface *gBall{nullptr};
 
-SDL_Renderer *gSDLRenderer;
-SDL_Texture *gSDLTexture;
-static int gDone;
 constexpr int kWindowWidth{1920 / 2};
 constexpr int kWindowHeight{1080 / 2};
+
+SDL_Rect gBallRect{0, 0, 50, 50};
 
 auto init() -> bool;
 auto loadMedia() -> bool;
@@ -56,6 +61,14 @@ auto loadMedia() -> bool {
             SDL_GetError());
     success = false;
   }
+
+  imagePath = "assets/ball.bmp";
+  if (gBall = SDL_LoadBMP(imagePath.c_str()); gBall == nullptr) {
+    SDL_Log("Can't load image %s. Error: %s\n", imagePath.c_str(),
+            SDL_GetError());
+    success = false;
+  }
+
   return success;
 }
 
@@ -80,13 +93,45 @@ auto logic() -> void {
       gRunning = false;
     } else if (event.type == SDL_EVENT_QUIT) {
       gRunning = false;
+    } else if (event.type == SDL_EVENT_KEY_DOWN) {
+      switch (event.key.key) {
+      case SDLK_DOWN:
+      case SDLK_S:
+        break;
+      case SDLK_UP:
+      case SDLK_W:
+        break;
+      case SDLK_LEFT:
+      case SDLK_A:
+        break;
+      case SDLK_RIGHT:
+      case SDLK_D:
+        break;
+      default:
+        // Do nothing.
+        break;
+      }
     }
+  }
+  const bool *keyStates = SDL_GetKeyboardState(nullptr);
+  if (keyStates[SDL_SCANCODE_DOWN] == true || keyStates[SDLK_S] == true) {
+    gBallRect.y += 1;
+  }
+  if (keyStates[SDL_SCANCODE_UP] == true || keyStates[SDLK_W] == true) {
+    gBallRect.y -= 1;
+  }
+  if (keyStates[SDL_SCANCODE_LEFT] == true || keyStates[SDLK_A] == true) {
+    gBallRect.x -= 1;
+  }
+  if (keyStates[SDL_SCANCODE_RIGHT] == true || keyStates[SDLK_D] == true) {
+    gBallRect.x += 1;
   }
 
   // Draw
   SDL_FillSurfaceRect(gScreenSurface, nullptr,
                       SDL_MapSurfaceRGB(gScreenSurface, 0xFF, 0xFF, 0xFF));
   SDL_BlitSurface(gHelloWorld, nullptr, gScreenSurface, nullptr);
+  SDL_BlitSurface(gBall, nullptr, gScreenSurface, &gBallRect);
   SDL_UpdateWindowSurface(gWindow);
 
 #ifdef __EMSCRIPTEN__
