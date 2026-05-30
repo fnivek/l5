@@ -20,51 +20,52 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-int *gFrameBuffer;
-SDL_Window *gWindow{nullptr};
-SDL_Surface *gScreenSurface{nullptr};
-SDL_Surface *gHelloWorld{nullptr};
-SDL_Surface *gBall{nullptr};
+int *g_frame_buffer;
+SDL_Window *g_window{nullptr};
+SDL_Surface *g_screen_surface{nullptr};
+SDL_Surface *g_hello_world{nullptr};
+SDL_Surface *g_ball{nullptr};
 
 constexpr int kWindowWidth{1920 / 2};
 constexpr int kWindowHeight{1080 / 2};
 
-SDL_Rect gBallRect{0, 0, 50, 50};
+SDL_Rect g_ball_rect{0, 0, 50, 50};
 
-auto init() -> bool;
-auto loadMedia() -> bool;
-auto close() -> void;
+auto Init() -> bool;
+auto LoadMedia() -> bool;
+auto Close() -> void;
 
-auto init() -> bool {
+auto Init() -> bool {
   bool success{true};
   if (SDL_Init(SDL_INIT_VIDEO) == false) {
     SDL_Log("SDL could not init. SDL error: %s\n", SDL_GetError());
     success = false;
   } else {
-    if (gWindow =
+    if (g_window =
             SDL_CreateWindow("Tutorial land.", kWindowWidth, kWindowHeight, 0);
-        gWindow == nullptr) {
+        g_window == nullptr) {
       success = false;
     } else {
-      gScreenSurface = SDL_GetWindowSurface(gWindow);
+      g_screen_surface = SDL_GetWindowSurface(g_window);
     }
   }
   return success;
 }
 
-auto loadMedia() -> bool {
+auto LoadMedia() -> bool {
   bool success{true};
 
-  std::string imagePath{"assets/hello.bmp"};
-  if (gHelloWorld = SDL_LoadBMP(imagePath.c_str()); gHelloWorld == nullptr) {
-    SDL_Log("Can't load image %s. Error: %s\n", imagePath.c_str(),
+  std::string image_path{"assets/hello.bmp"};
+  if (g_hello_world = SDL_LoadBMP(image_path.c_str());
+      g_hello_world == nullptr) {
+    SDL_Log("Can't load image %s. Error: %s\n", image_path.c_str(),
             SDL_GetError());
     success = false;
   }
 
-  imagePath = "assets/ball.bmp";
-  if (gBall = SDL_LoadBMP(imagePath.c_str()); gBall == nullptr) {
-    SDL_Log("Can't load image %s. Error: %s\n", imagePath.c_str(),
+  image_path = "assets/ball.bmp";
+  if (g_ball = SDL_LoadBMP(image_path.c_str()); g_ball == nullptr) {
+    SDL_Log("Can't load image %s. Error: %s\n", image_path.c_str(),
             SDL_GetError());
     success = false;
   }
@@ -72,27 +73,27 @@ auto loadMedia() -> bool {
   return success;
 }
 
-auto close() -> void {
-  SDL_DestroySurface(gHelloWorld);
-  gHelloWorld = nullptr;
+auto Close() -> void {
+  SDL_DestroySurface(g_hello_world);
+  g_hello_world = nullptr;
 
-  SDL_DestroyWindow(gWindow);
-  gWindow = nullptr;
-  gScreenSurface = nullptr;
+  SDL_DestroyWindow(g_window);
+  g_window = nullptr;
+  g_screen_surface = nullptr;
 
   SDL_Quit();
 }
 
-bool gRunning{true};
-auto logic() -> void {
+bool g_running{true};
+auto Logic() -> void {
   // Events
   SDL_Event event;
   SDL_zero(event);
   while (SDL_PollEvent(&event) == true) {
     if (event.type == SDL_EVENT_KEY_UP && event.key.key == SDLK_ESCAPE) {
-      gRunning = false;
+      g_running = false;
     } else if (event.type == SDL_EVENT_QUIT) {
-      gRunning = false;
+      g_running = false;
     } else if (event.type == SDL_EVENT_KEY_DOWN) {
       switch (event.key.key) {
       case SDLK_DOWN:
@@ -113,29 +114,29 @@ auto logic() -> void {
       }
     }
   }
-  const bool *keyStates = SDL_GetKeyboardState(nullptr);
-  if (keyStates[SDL_SCANCODE_DOWN] == true || keyStates[SDLK_S] == true) {
-    gBallRect.y += 1;
+  const bool *const kKeyStates = SDL_GetKeyboardState(nullptr);
+  if (kKeyStates[SDL_SCANCODE_DOWN] == true || kKeyStates[SDLK_S] == true) {
+    g_ball_rect.y += 1;
   }
-  if (keyStates[SDL_SCANCODE_UP] == true || keyStates[SDLK_W] == true) {
-    gBallRect.y -= 1;
+  if (kKeyStates[SDL_SCANCODE_UP] == true || kKeyStates[SDLK_W] == true) {
+    g_ball_rect.y -= 1;
   }
-  if (keyStates[SDL_SCANCODE_LEFT] == true || keyStates[SDLK_A] == true) {
-    gBallRect.x -= 1;
+  if (kKeyStates[SDL_SCANCODE_LEFT] == true || kKeyStates[SDLK_A] == true) {
+    g_ball_rect.x -= 1;
   }
-  if (keyStates[SDL_SCANCODE_RIGHT] == true || keyStates[SDLK_D] == true) {
-    gBallRect.x += 1;
+  if (kKeyStates[SDL_SCANCODE_RIGHT] == true || kKeyStates[SDLK_D] == true) {
+    g_ball_rect.x += 1;
   }
 
   // Draw
-  SDL_FillSurfaceRect(gScreenSurface, nullptr,
-                      SDL_MapSurfaceRGB(gScreenSurface, 0xFF, 0xFF, 0xFF));
-  SDL_BlitSurface(gHelloWorld, nullptr, gScreenSurface, nullptr);
-  SDL_BlitSurface(gBall, nullptr, gScreenSurface, &gBallRect);
-  SDL_UpdateWindowSurface(gWindow);
+  SDL_FillSurfaceRect(g_screen_surface, nullptr,
+                      SDL_MapSurfaceRGB(g_screen_surface, 0xFF, 0xFF, 0xFF));
+  SDL_BlitSurface(g_hello_world, nullptr, g_screen_surface, nullptr);
+  SDL_BlitSurface(g_ball, nullptr, g_screen_surface, &g_ball_rect);
+  SDL_UpdateWindowSurface(g_window);
 
 #ifdef __EMSCRIPTEN__
-  if (!gRunning)
+  if (!g_running)
     emscripten_cancel_main_loop();
 #endif
 }
@@ -143,26 +144,26 @@ auto logic() -> void {
 auto main(int argc, char *args[]) -> int {
   int exitCode{0};
 
-  if (init() == false) {
+  if (Init() == false) {
     SDL_Log("Failed to init\n");
     exitCode = 1;
   } else {
-    if (loadMedia() == false) {
+    if (LoadMedia() == false) {
       SDL_Log("Failed to load media\n");
       exitCode = 2;
     } else {
 
 #ifdef __EMSCRIPTEN__
-      emscripten_set_main_loop(logic, 0, 1);
+      emscripten_set_main_loop(Logic, 0, 1);
 #else
-      while (gRunning) {
-        logic();
+      while (g_running) {
+        Logic();
         SDL_Delay(1); // native only; in the browser rAF handles pacing
       }
 #endif
       bool quit = false;
     }
-    close();
+    Close();
   }
   return exitCode;
 }
