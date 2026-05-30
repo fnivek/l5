@@ -75,6 +75,10 @@
 
           # Native Linux build (SDL3; used by the linux target and clangd LSP)
           sdl3
+
+          # Documentation
+          doxygen
+          graphviz
         ];
 
         shellHook = ''
