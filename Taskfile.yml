@@ -58,6 +58,24 @@ tasks:
     cmds:
       - bash tasks/build-linux.sh
 
+  build-docs-l5:
+    desc: "Build Doxygen HTML docs for the l5 app (output: build/docs/l5)."
+    cmds:
+      - cmake --build build/linux --target docs-l5
+
+  build-docs-behavior_trees:
+    desc: "Build Doxygen HTML docs for behavior_trees (output: build/docs/behavior_trees)."
+    cmds:
+      - cmake --build build/linux --target docs-behavior_trees
+
+  build-docs:
+    desc: "Build Doxygen HTML docs for all components (output: build/docs/)."
+    deps:
+      - build-linux
+    cmds:
+      - cmake --build build/linux --target docs-l5
+      - cmake --build build/linux --target docs-behavior_trees
+
   serve-web-release:
     desc: "Serve the release web build at http://localhost:8000."
     cmds:
@@ -175,6 +193,7 @@ tasks:
       - build-linux
       - build-release
       - build-debug
+      - build-docs
       - test
       - lint
       - format-check

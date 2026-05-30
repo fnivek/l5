@@ -40,3 +40,25 @@ else()
     target_compile_options(l5 PRIVATE "-isystem${dir}")
   endforeach()
 endif()
+
+if(DOXYGEN_FOUND)
+  set(DOXYGEN_PROJECT_NAME "l5")
+  set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/docs/l5")
+  set(DOXYGEN_GENERATE_HTML YES)
+  set(DOXYGEN_GENERATE_LATEX NO)
+  set(DOXYGEN_EXTRACT_ALL YES)
+  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${CMAKE_CURRENT_SOURCE_DIR}/docs/mainpage.md")
+  if(DOXYGEN_DOT_FOUND)
+    set(DOXYGEN_HAVE_DOT YES)
+    set(DOXYGEN_CALL_GRAPH YES)
+    set(DOXYGEN_CALLER_GRAPH YES)
+  else()
+    set(DOXYGEN_HAVE_DOT NO)
+  endif()
+  doxygen_add_docs(docs-l5
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/mainpage.md"
+    COMMENT "Generating l5 HTML documentation"
+  )
+endif()
