@@ -21,6 +21,7 @@ if(DOXYGEN_FOUND)
   set(DOXYGEN_GENERATE_HTML YES)
   set(DOXYGEN_GENERATE_LATEX NO)
   set(DOXYGEN_EXTRACT_ALL YES)
+  set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${CMAKE_CURRENT_SOURCE_DIR}/docs/mainpage.md")
   if(DOXYGEN_DOT_FOUND)
     set(DOXYGEN_HAVE_DOT YES)
     set(DOXYGEN_CALL_GRAPH YES)
@@ -30,6 +31,7 @@ if(DOXYGEN_FOUND)
   endif()
   doxygen_add_docs(docs-behavior_trees
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/docs/mainpage.md"
     COMMENT "Generating behavior_trees HTML documentation"
   )
 endif()

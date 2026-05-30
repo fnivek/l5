@@ -50,6 +50,7 @@ tasks:
 
   build-linux:
     desc: "Configure and build native Linux targets with CMake + Make (also used for clangd LSP)."
+    run: once
     env:
       BUILD_TYPE: Debug
       BUILD_DIR: build/linux
@@ -60,11 +61,15 @@ tasks:
 
   build-docs-l5:
     desc: "Build Doxygen HTML docs for the l5 app (output: build/docs/l5)."
+    deps:
+      - build-linux
     cmds:
       - cmake --build build/linux --target docs-l5
 
   build-docs-behavior_trees:
     desc: "Build Doxygen HTML docs for behavior_trees (output: build/docs/behavior_trees)."
+    deps:
+      - build-linux
     cmds:
       - cmake --build build/linux --target docs-behavior_trees
 

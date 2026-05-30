@@ -4,13 +4,6 @@
 
 **l5** is a cross-platform SDL3 game targeting native Linux and the browser via Emscripten/WebAssembly.
 
-## Architecture
-
-| Component | Description |
-|-----------|-------------|
-| `apps/l5` | Application entry point — SDL3 rendering loop and game logic |
-| `libs/behavior_trees` | Header-only C++26 library for composable behavior trees |
-
 ## Source Layout
 
 - `include/` — Public headers (e.g., `file_texture.h`)
