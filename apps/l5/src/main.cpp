@@ -31,11 +31,11 @@ constexpr int kWindowHeight{1080 / 2};
 
 SDL_Rect g_ball_rect{0, 0, 50, 50};
 
-auto Init() -> bool;
-auto LoadMedia() -> bool;
-auto Close() -> void;
+bool Init();
+bool LoadMedia();
+void Close();
 
-auto Init() -> bool {
+bool Init() {
   bool success{true};
   if (SDL_Init(SDL_INIT_VIDEO) == false) {
     SDL_Log("SDL could not init. SDL error: %s\n", SDL_GetError());
@@ -52,7 +52,7 @@ auto Init() -> bool {
   return success;
 }
 
-auto LoadMedia() -> bool {
+bool LoadMedia() {
   bool success{true};
 
   std::string image_path{"assets/hello.bmp"};
@@ -73,7 +73,7 @@ auto LoadMedia() -> bool {
   return success;
 }
 
-auto Close() -> void {
+void Close() {
   SDL_DestroySurface(g_hello_world);
   g_hello_world = nullptr;
 
@@ -85,7 +85,7 @@ auto Close() -> void {
 }
 
 bool g_running{true};
-auto Logic() -> void {
+void Logic() {
   // Events
   SDL_Event event;
   SDL_zero(event);
@@ -141,7 +141,7 @@ auto Logic() -> void {
 #endif
 }
 
-auto main(int argc, char *args[]) -> int {
+int main(int argc, char *args[]) {
   int exitCode{0};
 
   if (Init() == false) {
