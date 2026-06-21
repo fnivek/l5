@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(l5 src/main.cpp)
-target_link_libraries(l5 PRIVATE behavior_trees)
+target_link_libraries(l5 PRIVATE behavior_trees Microsoft.GSL::GSL)
 
 if(EMSCRIPTEN)
   # SDL3 via Emscripten's system port. Must be on both compile and link so the
