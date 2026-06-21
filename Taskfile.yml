@@ -126,9 +126,11 @@ tasks:
       - lint-nix
 
   lint-cpp:
-    desc: "[STUB] Run clang-tidy on C++ sources. Requires a .clang-tidy config."
+    desc: "Run clang-tidy on all C++ sources via run-clang-tidy."
+    deps:
+      - build-linux
     cmds:
-      - echo "[STUB] lint-cpp -- create a .clang-tidy config, then replace with run-clang-tidy -p build/native"
+      - run-clang-tidy -p build/linux
 
   lint-python:
     desc: "Lint Python sources with ruff."

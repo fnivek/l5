@@ -1,0 +1,38 @@
+---
+# Enable everything except toolchain/platform/framework-specific checks that
+# don't apply to this project.  Reduce individual checks here as needed.
+Checks: >
+  *,
+  -llvm-*,
+  -llvmlibc-*,
+  -fuchsia-*,
+  -abseil-*,
+  -android-*,
+  -altera-*,
+  -objc-*,
+  -zircon-*,
+  -darwin-*,
+  -modernize-use-trailing-return-type
+
+WarningsAsErrors: "*"
+
+# Only report diagnostics for our own headers (not SDL3, GSL, etc.).
+HeaderFilterRegex: "(apps|libs)/.*\\.(h|hpp)$"
+
+FormatStyle: file
+
+CheckOptions:
+  # Allow single-char loop variables (i, j, x, y are idiomatic).
+  - key: readability-identifier-length.MinimumVariableNameLength
+    value: "2"
+  - key: readability-identifier-length.MinimumParameterNameLength
+    value: "2"
+  - key: readability-identifier-length.MinimumLoopCounterNameLength
+    value: "1"
+  # Rule of 5: allow classes that only define a defaulted destructor.
+  - key: cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: "true"
+  # Prefer brace initialisation, but let modernize-use-default-member-init
+  # keep its default (= syntax) rather than forcing braces.
+  - key: modernize-use-default-member-init.UseAssignment
+    value: "false"
