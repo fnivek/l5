@@ -1,4 +1,4 @@
-#include <SDL3/SDL_timer.h>
+#include <emscripten/emscripten.h>
 
 #include "l5/game_manager.h"
 #include "l5/sdl_wrappers.h"
@@ -16,12 +16,14 @@ int main(int /*argc*/, char * /*args*/[]) {
       SdlWrap::Log("Failed to load media\n");
       exitCode = 2;
     } else {
-      while (gm.is_running()) {
-        gm.Logic();
-        // TODO(Kevin): Change to a rate instead of just sleeping 1 ms.
-        // TODO(Kevin): Move out of main.
-        SDL_Delay(1);
-      }
+      emscripten_set_main_loop_arg(
+          [](void *arg) {
+            auto *gm_ptr = static_cast<GameManager *>(arg);
+            gm_ptr->Logic();
+            if (!gm_ptr->is_running())
+              emscripten_cancel_main_loop();
+          },
+          &gm, 0, 1);
     }
   }
   return exitCode;

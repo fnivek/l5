@@ -5,29 +5,22 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(l5 src/main.cpp)
-target_link_libraries(l5 PRIVATE behavior_trees Microsoft.GSL::GSL)
+# ---------------------------------------------------------------------------
+# Shared across both targets
+# ---------------------------------------------------------------------------
+set(L5_SHARED_SOURCES src/game_manager.cc)
+set(L5_INCLUDE_DIRS   include)
+set(L5_DEPS           behavior_trees Microsoft.GSL::GSL)
 
-if(EMSCRIPTEN)
-  # SDL3 via Emscripten's system port. Must be on both compile and link so the
-  # port's include paths are injected at compile time.
-  target_compile_options(l5 PRIVATE -sUSE_SDL=3)
-  target_link_options(l5 PRIVATE
-    -sUSE_SDL=3
-    --preload-file ${CMAKE_SOURCE_DIR}/assets@assets
-  )
-
-  set_target_properties(l5 PROPERTIES OUTPUT_NAME "index" SUFFIX ".html")
-  install(FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/index.html
-      ${CMAKE_CURRENT_BINARY_DIR}/index.js
-      ${CMAKE_CURRENT_BINARY_DIR}/index.wasm
-      ${CMAKE_CURRENT_BINARY_DIR}/index.data
-      DESTINATION share/l5)
-else()
-  # Native Linux build — SDL3.
+# ---------------------------------------------------------------------------
+# Native target — skipped when cross-compiling with Emscripten
+# ---------------------------------------------------------------------------
+if(NOT EMSCRIPTEN)
   find_package(SDL3 REQUIRED CONFIG)
-  target_link_libraries(l5 PRIVATE SDL3::SDL3)
+
+  add_executable(l5 src/main.cc ${L5_SHARED_SOURCES})
+  target_include_directories(l5 PRIVATE ${L5_INCLUDE_DIRS})
+  target_link_libraries(l5 PRIVATE ${L5_DEPS} SDL3::SDL3)
 
   # Bake the compiler's implicit system includes into compile_commands.json so
   # clangd can find standard headers (stdio.h, libstdc++, glibc, …) without
@@ -41,7 +34,34 @@ else()
   endforeach()
 endif()
 
-if(DOXYGEN_FOUND)
+# ---------------------------------------------------------------------------
+# Web target — only meaningful under emcmake
+# ---------------------------------------------------------------------------
+if(EMSCRIPTEN)
+  set(L5_WEB_SDL_FLAGS -sUSE_SDL=3)
+
+  add_executable(l5_web src/main_web.cc ${L5_SHARED_SOURCES})
+  target_include_directories(l5_web PRIVATE ${L5_INCLUDE_DIRS})
+  target_link_libraries(l5_web PRIVATE ${L5_DEPS})
+
+  # SDL3 via Emscripten's system port. Must be on both compile and link so the
+  # port's include paths are injected at compile time.
+  target_compile_options(l5_web PRIVATE ${L5_WEB_SDL_FLAGS})
+  target_link_options(l5_web PRIVATE
+    ${L5_WEB_SDL_FLAGS}
+    --preload-file ${CMAKE_SOURCE_DIR}/assets@assets
+  )
+
+  set_target_properties(l5_web PROPERTIES OUTPUT_NAME "index" SUFFIX ".html")
+  install(FILES
+      ${CMAKE_CURRENT_BINARY_DIR}/index.html
+      ${CMAKE_CURRENT_BINARY_DIR}/index.js
+      ${CMAKE_CURRENT_BINARY_DIR}/index.wasm
+      ${CMAKE_CURRENT_BINARY_DIR}/index.data
+      DESTINATION share/l5_web)
+endif()
+
+if(DOXYGEN_FOUND AND NOT EMSCRIPTEN)
   set(DOXYGEN_PROJECT_NAME "l5")
   set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build/docs/l5")
   set(DOXYGEN_GENERATE_HTML YES)
