@@ -230,10 +230,17 @@ tasks:
   # Dev tooling
   # ---------------------------------------------------------------------------
 
+  clear-emscripten-cache:
+    desc: "Clear the Emscripten system-library cache (required after upgrading emscripten via flake update)."
+    cmds:
+      - emcc --clear-cache
+
   update-flake-inputs:
-    desc: "Updates all flake inputs."
+    desc: "Updates all flake inputs, then clears build artifacts and Emscripten cache."
     cmds:
       - nix flake update
+      - task: clean
+      - task: clear-emscripten-cache
 
   update-gsl:
     desc: "Pull latest Microsoft GSL into libs/gsl via git subtree."
@@ -241,9 +248,11 @@ tasks:
       - git subtree pull --prefix libs/gsl https://github.com/microsoft/GSL.git main --squash
 
   update-deps:
-    desc: "Update all vendored third-party libraries."
-    deps:
-      - update-gsl
+    desc: "Update all vendored third-party libraries, then clears build artifacts and Emscripten cache."
+    cmds:
+      - task: update-gsl
+      - task: clean
+      - task: clear-emscripten-cache
 
   super-lint:
     desc: Run GitHub super linter.
